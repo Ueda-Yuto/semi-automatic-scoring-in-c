@@ -1,31 +1,27 @@
 import os
-import subprocess
-
-os.makedirs("../data/a_01/error", exist_ok=True)
-
-
-def execute_cmd(cmd: str):
-    result = (
-        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True).communicate()[0]
-    ).decode("utf-8")
-    return result
+import pandas as pd
+import glob
 
 
 def main():
-    cmd = "cd ../data/a_01 && ls | grep .c"  # <=ここにコマンドを当てはめる
-    result = (
-        subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True).communicate()[0]
-    ).decode("utf-8")
+    with open("../data/gakuseki.txt", "r") as f:
+        lines = f.readlines()
+    lines = [line.rstrip("\n") for line in lines]
+    lines = map(int, lines)
+    cols = ["a_01", "a_02", "a_03", "b_01", "b_02", "b_03", "b_04"]
+    df = pd.DataFrame(columns=cols, index=lines)
 
-    files = result.split("\n")
-    for file in files:
-        cmd = f"gcc ../data/a_01/{file}"
-        res = execute_cmd(cmd)
-        # print("result:" + res + ";")
-        if res != "":
-            print("error!!!!!")
-            # _res = execute_cmd(f"mv ../data/a_01/{file} ../data/a_01/error/")
-            # print(_res)
+    for dir_name in df.columns:
+        for score in [0, 1, 2]:
+            files = glob.glob(f"../data/{dir_name}/score{score}/*")
+            for file in files:
+                gakuseki = int(os.path.split(file)[1][:8])
+                df.loc[gakuseki, dir_name] = score
+            # break
+    print(df)
+    df = df.fillna(0)
+
+    df.to_csv("./score.csv", header=True, index=True)
 
 
 if __name__ == "__main__":
